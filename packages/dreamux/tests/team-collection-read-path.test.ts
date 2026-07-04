@@ -23,8 +23,8 @@ import type {
 
 import type { AgentRuntimeProviderCatalog } from '../src/agent-runtime/index.js';
 import { TeamCollection } from '../src/service/team-collection/index.js';
-import { TeamMateIdentityStore } from '../src/service/teammate-collection/identity-store.js';
-import { TeamMateTurnsStore } from '../src/service/teammate-collection/turns-store.js';
+import { AgentIdentityStore } from '../src/service/agent-entity/identity-store.js';
+import { AgentTurnsStore } from '../src/service/agent-entity/turns-store.js';
 import {
   CompletionRouter,
   type CompletionDeliveryResult,
@@ -213,13 +213,13 @@ describe('TeamCollection read path (issue #233 R4)', () => {
       }),
     ]);
     const log = noopLog();
-    const turnsStore = new TeamMateTurnsStore({ warn: log.warn.bind(log) });
+    const turnsStore = new AgentTurnsStore({ warn: log.warn.bind(log) });
     const teams = new TeamCollection({
       dispatcherId: 'dispatcher-a',
       config,
       agentRuntimeProviders: fakeRuntimeCatalog(runtimes),
       worktrees: new WorktreeManager(),
-      identities: new TeamMateIdentityStore({ warn: log.warn.bind(log) }),
+      identities: new AgentIdentityStore({ warn: log.warn.bind(log) }),
       turnsStore,
       router: new CompletionRouter({ dispatcherId: 'dispatcher-a', log }),
       initiatorFor: async () => null,
@@ -325,8 +325,8 @@ describe('TeamCollection create without a prompt fires no leader turn', () => {
       config,
       agentRuntimeProviders: fakeRuntimeCatalog(runtimes),
       worktrees: new WorktreeManager(),
-      identities: new TeamMateIdentityStore({ warn: log.warn.bind(log) }),
-      turnsStore: new TeamMateTurnsStore({ warn: log.warn.bind(log) }),
+      identities: new AgentIdentityStore({ warn: log.warn.bind(log) }),
+      turnsStore: new AgentTurnsStore({ warn: log.warn.bind(log) }),
       router: new CompletionRouter({ dispatcherId: 'dispatcher-a', log }),
       initiatorFor: async () => null,
       isShuttingDown: () => false,
@@ -388,14 +388,14 @@ describe('TeamCollection identity prompt launch behavior', () => {
       }),
     ]);
     const log = noopLog();
-    const identities = new TeamMateIdentityStore({ warn: log.warn.bind(log) });
+    const identities = new AgentIdentityStore({ warn: log.warn.bind(log) });
     const teams = new TeamCollection({
       dispatcherId: 'dispatcher-a',
       config,
       agentRuntimeProviders: fakeRuntimeCatalog(runtimes, {}, contexts),
       worktrees: new WorktreeManager(),
       identities,
-      turnsStore: new TeamMateTurnsStore({ warn: log.warn.bind(log) }),
+      turnsStore: new AgentTurnsStore({ warn: log.warn.bind(log) }),
       router: new CompletionRouter({ dispatcherId: 'dispatcher-a', log }),
       initiatorFor: async () => null,
       isShuttingDown: () => false,
@@ -465,8 +465,8 @@ describe('TeamCollection identity prompt launch behavior', () => {
       config,
       agentRuntimeProviders: fakeRuntimeCatalog(runtimes),
       worktrees: new WorktreeManager(),
-      identities: new TeamMateIdentityStore({ warn: log.warn.bind(log) }),
-      turnsStore: new TeamMateTurnsStore({ warn: log.warn.bind(log) }),
+      identities: new AgentIdentityStore({ warn: log.warn.bind(log) }),
+      turnsStore: new AgentTurnsStore({ warn: log.warn.bind(log) }),
       router: new CompletionRouter({ dispatcherId: 'dispatcher-a', log }),
       initiatorFor: async () => null,
       isShuttingDown: () => false,
@@ -517,13 +517,13 @@ describe('TeamCollection dispatcher send to TeamLeader', () => {
       }),
     ]);
     const log = noopLog();
-    const turnsStore = new TeamMateTurnsStore({ warn: log.warn.bind(log) });
+    const turnsStore = new AgentTurnsStore({ warn: log.warn.bind(log) });
     const teams = new TeamCollection({
       dispatcherId: 'dispatcher-a',
       config,
       agentRuntimeProviders: fakeRuntimeCatalog(runtimes),
       worktrees: new WorktreeManager(),
-      identities: new TeamMateIdentityStore({ warn: log.warn.bind(log) }),
+      identities: new AgentIdentityStore({ warn: log.warn.bind(log) }),
       turnsStore,
       router: new CompletionRouter({ dispatcherId: 'dispatcher-a', log }),
       initiatorFor: async () => null,
@@ -579,6 +579,7 @@ describe('TeamCollection dispatcher send to TeamLeader', () => {
       }),
     );
 
+    await teams.stopAll();
   });
 
   it('routes dispatcher team.send completion back to the dispatcher initiator', async () => {
@@ -595,7 +596,7 @@ describe('TeamCollection dispatcher send to TeamLeader', () => {
     ]);
     const log = noopLog();
     const router = new CompletionRouter({ dispatcherId: 'dispatcher-a', log });
-    const turnsStore = new TeamMateTurnsStore({ warn: log.warn.bind(log) });
+    const turnsStore = new AgentTurnsStore({ warn: log.warn.bind(log) });
     const teams = new TeamCollection({
       dispatcherId: 'dispatcher-a',
       config,
@@ -603,7 +604,7 @@ describe('TeamCollection dispatcher send to TeamLeader', () => {
         lastText: 'leader finished',
       }),
       worktrees: new WorktreeManager(),
-      identities: new TeamMateIdentityStore({ warn: log.warn.bind(log) }),
+      identities: new AgentIdentityStore({ warn: log.warn.bind(log) }),
       turnsStore,
       router,
       initiatorFor: async () => null,
@@ -635,6 +636,7 @@ describe('TeamCollection dispatcher send to TeamLeader', () => {
         result: 'leader finished',
       },
     ]);
+    await teams.stopAll();
   });
 
   it('fails missing or closed Teams before submitting to the leader', async () => {
@@ -655,8 +657,8 @@ describe('TeamCollection dispatcher send to TeamLeader', () => {
       config,
       agentRuntimeProviders: fakeRuntimeCatalog(runtimes),
       worktrees: new WorktreeManager(),
-      identities: new TeamMateIdentityStore({ warn: log.warn.bind(log) }),
-      turnsStore: new TeamMateTurnsStore({ warn: log.warn.bind(log) }),
+      identities: new AgentIdentityStore({ warn: log.warn.bind(log) }),
+      turnsStore: new AgentTurnsStore({ warn: log.warn.bind(log) }),
       router: new CompletionRouter({ dispatcherId: 'dispatcher-a', log }),
       initiatorFor: async () => null,
       isShuttingDown: () => false,
@@ -764,8 +766,8 @@ describe('closing a team member must not remove the shared team worktree', () =>
       config,
       agentRuntimeProviders: fakeRuntimeCatalog(runtimes),
       worktrees: new WorktreeManager(),
-      identities: new TeamMateIdentityStore({ warn: log.warn.bind(log) }),
-      turnsStore: new TeamMateTurnsStore({ warn: log.warn.bind(log) }),
+      identities: new AgentIdentityStore({ warn: log.warn.bind(log) }),
+      turnsStore: new AgentTurnsStore({ warn: log.warn.bind(log) }),
       router: new CompletionRouter({ dispatcherId: 'dispatcher-a', log }),
       initiatorFor: async () => null,
       isShuttingDown: () => false,
@@ -859,8 +861,8 @@ describe('team dissolve syncs cleanup_state to the leader and members (#237)', (
       config,
       agentRuntimeProviders: fakeRuntimeCatalog(runtimes),
       worktrees: new WorktreeManager(),
-      identities: new TeamMateIdentityStore({ warn: log.warn.bind(log) }),
-      turnsStore: new TeamMateTurnsStore({ warn: log.warn.bind(log) }),
+      identities: new AgentIdentityStore({ warn: log.warn.bind(log) }),
+      turnsStore: new AgentTurnsStore({ warn: log.warn.bind(log) }),
       router: new CompletionRouter({ dispatcherId: 'dispatcher-a', log }),
       initiatorFor: async () => null,
       isShuttingDown: () => false,
